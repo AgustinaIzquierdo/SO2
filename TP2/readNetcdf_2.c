@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <netcdf.h>
-#include "/home/anij/Development/SO2/hpc/libs/netcdf/include/netcdf.h"
 #include <omp.h>
 
 
@@ -15,8 +14,9 @@
 #define ERR(e) {   printf("Error: %s\n", nc_strerror(e)); exit(ERRCODE);}
 
 // /* nombre del archivo a leer */
-#define FILE_NAME "OR_ABI-L2-CMIPF-M6C02_G16_s20191011800206_e20191011809514_c20191011809591.nc"
-#define FILE_NAME2 "data.nc"
+#define FILE_NAME "pepe.nc"
+#define FILE_NAME2 "pepe2.nc"
+
 /* Lectura de una matriz de 21696 x 21696 */
 #define NX 21696
 #define NY 21696
@@ -57,10 +57,11 @@ void convolve(float *imag, float filtro[XY][XY], float *imag_filt)
                                         +imag[(x+1)*row + (y+2)]   *filtro[1][2]
                                         +imag[(x+2)*row + (y)]     *filtro[2][0]
                                         +imag[(x+2)*row + (y+1)]   *filtro[2][1] 
-                                        +imag[(x+2)*row + (y+2)]   *filtro[2][2]) *0.00031746;
+                                        +imag[(x+2)*row + (y+2)]   *filtro[2][2]) *(float)0.00031746;
         }
     }
-    
+    printf("%f", imag[NX*NX]);
+    printf("%f", imag_filt[NX*NX]);
 }
 
 void save_data(int r,int s,float *imag_filt)
@@ -89,10 +90,6 @@ void save_data(int r,int s,float *imag_filt)
     if ((status = nc_inq_varid(ncid2, "CMI", &id)))
         ERR(status);
 
-    // status = nc_enddef(ncid2);
-    // if (status != NC_NOERR) 
-    //     ERR(status);
-
     if ((status = nc_put_vara_float(ncid2,id,start,conteo,imag_filt)))
         ERR(status);
     if ((status = nc_close(ncid2)))
@@ -110,11 +107,13 @@ int main()
 
     conteo[0]=NX;//cant filas
     conteo[1]=NY;//cant columnas
+    start[0] = 0;
+    start[1] = 0;
 
     if ((retval = nc_open(FILE_NAME, NC_NOWRITE, &ncid)))
         ERR(retval);
 
-    /* Obtenemos elvarID de la variable CMI. */
+    /* Obtenemos elvarID de la variable CMIsave_data. */
     if ((retval = nc_inq_varid(ncid, "CMI", &varid)))
         ERR(retval);
     
@@ -126,6 +125,7 @@ int main()
 
     /* el desarrollo acá */
     //-------------------------------------------------------------------------
+    
     convolve(imag_in, filtro, imag_filt);
     
     save_data(start[0],start[1], imag_filt);//arma matriz con datos de imagen
