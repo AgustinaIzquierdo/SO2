@@ -2,8 +2,8 @@
 
 all: netcdf
 
-netcdf : readNetcdf.c
-	gcc -Wall -Werror -pedantic -o eNetcdf readNetcdf.c
+netcdf : readNetcdf_2.c
+	gcc -Wall -Werror -pedantic -o eNetcdf readNetcdf_2.c `nc-config --cflags --libs`
 
 clean:
 	rm eNetcdf \

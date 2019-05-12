@@ -16,7 +16,7 @@
 
 // /* nombre del archivo a leer */
 #define FILE_NAME "OR_ABI-L2-CMIPF-M6C02_G16_s20191011800206_e20191011809514_c20191011809591.nc"
-
+#define FILE_NAME2 "data.nc"
 /* Lectura de una matriz de 21696 x 21696 */
 #define NX 21696
 #define NY 21696
@@ -49,15 +49,15 @@ void convolve(float *imag, float filtro[XY][XY], float *imag_filt)
     {   
         for(y=0; y<col-1; y++)
         {
-            imag_filt[(x+1)*row+(y+1)]= (imag_filt[(x)*row + (y)]       *filtro[0][0]
-                                        +imag_filt[(x)*row + (y+1)]     *filtro[0][1] 
-                                        +imag_filt[(x)*row + (y+2)]     *filtro[0][2]
-                                        +imag_filt[(x+1)*row + (y)]     *filtro[1][0]
-                                        +imag_filt[(x+1)*row + (y+1)]   *filtro[1][1] 
-                                        +imag_filt[(x+1)*row + (y+2)]   *filtro[1][2]
-                                        +imag_filt[(x+2)*row + (y)]     *filtro[2][0]
-                                        +imag_filt[(x+2)*row + (y+1)]   *filtro[2][1] 
-                                        +imag_filt[(x+2)*row + (y+2)]   *filtro[2][2]) *0.00031746;
+            imag_filt[(x+1)*row+(y+1)]= (imag[(x)*row + (y)]       *filtro[0][0]
+                                        +imag[(x)*row + (y+1)]     *filtro[0][1] 
+                                        +imag[(x)*row + (y+2)]     *filtro[0][2]
+                                        +imag[(x+1)*row + (y)]     *filtro[1][0]
+                                        +imag[(x+1)*row + (y+1)]   *filtro[1][1] 
+                                        +imag[(x+1)*row + (y+2)]   *filtro[1][2]
+                                        +imag[(x+2)*row + (y)]     *filtro[2][0]
+                                        +imag[(x+2)*row + (y+1)]   *filtro[2][1] 
+                                        +imag[(x+2)*row + (y+2)]   *filtro[2][2]) *0.00031746;
         }
     }
     
@@ -66,7 +66,7 @@ void convolve(float *imag, float filtro[XY][XY], float *imag_filt)
 void save_data(int r,int s,float *imag_filt)
 {
     /**/
-    status = nc_open(FILE_NAME, NC_WRITE, &ncid2);//nc_create("/home/anij/facu/2019/1erSemestre/SO2/S02/TP2/data.nc", NC_CLOBBER, &ncid2);
+    status = nc_open(FILE_NAME2, NC_WRITE, &ncid2);//nc_create("/home/anij/facu/2019/1erSemestre/SO2/S02/TP2/data.nc", NC_CLOBBER, &ncid2);
     if (status != NC_NOERR) 
         ERR(status);
 
@@ -89,9 +89,9 @@ void save_data(int r,int s,float *imag_filt)
     if ((status = nc_inq_varid(ncid2, "CMI", &id)))
         ERR(status);
 
-    status = nc_enddef(ncid2);
-    if (status != NC_NOERR) 
-        ERR(status);
+    // status = nc_enddef(ncid2);
+    // if (status != NC_NOERR) 
+    //     ERR(status);
 
     if ((status = nc_put_vara_float(ncid2,id,start,conteo,imag_filt)))
         ERR(status);
