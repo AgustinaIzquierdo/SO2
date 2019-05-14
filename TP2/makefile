@@ -3,7 +3,9 @@
 all: netcdf
 
 netcdf : readNetcdf_2.c
-	gcc -Wall -Werror -pedantic -o eNetcdf readNetcdf_2.c `nc-config --cflags --libs`
+        icc -xCORE_AVX512 -std=gnu99 -Wall -Werror -pedantic -o eNetcdf readNetcdf_2.c -L/home/Estudiante2/Develo$
+        #gcc -Wall -Werror -pedantic -o eNetcdf readNetcdf_2.c `nc-config --cflags --libs`
 
 clean:
-	rm eNetcdf \
+        rm eNetcdf \
+
