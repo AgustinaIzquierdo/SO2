@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <netcdf.h>
-#include "/home/anij/Development/SO2/hpc/libs/netcdf/include/netcdf.h"
+#include "./netcdf.h"
 #include <omp.h>
 #include <time.h>
 
@@ -19,7 +19,7 @@
 #define ERR(e) {   printf("Error: %s\n", nc_strerror(e)); exit(ERRCODE);}
 
 // /* nombre del archivo a leer */
-#define FILE_NAME "OR_ABI-L2-CMIPF-M6C02_G16_s20191011800206_e20191011809514_c20191011809591.nc"
+#define FILE_NAME "imag.nc"
 #define FILE_NAME2 "data.nc"
 
 /* matriz de 21696 x 21696 */
@@ -45,14 +45,12 @@ void convolve(float *imag, float filtro[XY][XY], float *imag_filt)
     row=NX;
     col=NY;
     
-    omp_set_num_threads(4);
-    #pragma omp parallel
-    {
-        for(x=0; x<row-1; x++)
-        {   
-            for(y=0; y<col-1; y++)
-            {
-                imag_filt[(x+1)*row+(y+1)]= (imag[(x)*row + (y)]       *filtro[0][0]
+    #pragma omp parallel for num_threads(2)
+    for(x=0; x<row-1; x++)
+    {   
+    	for(y=0; y<col-1; y++)
+        {
+        	imag_filt[(x+1)*row+(y+1)]= (imag[(x)*row + (y)]       *filtro[0][0]
                                             +imag[(x)*row + (y+1)]     *filtro[0][1] 
                                             +imag[(x)*row + (y+2)]     *filtro[0][2]
                                             +imag[(x+1)*row + (y)]     *filtro[1][0]
@@ -61,8 +59,7 @@ void convolve(float *imag, float filtro[XY][XY], float *imag_filt)
                                             +imag[(x+2)*row + (y)]     *filtro[2][0]
                                             +imag[(x+2)*row + (y+1)]   *filtro[2][1] 
                                             +imag[(x+2)*row + (y+2)]   *filtro[2][2]) *(float)0.00031746;
-            }
-        }
+      	 }
     }    
 }
 
@@ -110,9 +107,9 @@ int main()
     float filtro[XY][XY] = {{-1.0, -1.0, -1.0},{-1.0, 8.0, -1.0},{-1.0, -1.0, -1.0}}; //filtro laplaciano
     int retval;
 
-    clock_t inicio_convol , fin_convol;
-	double time_convol;
-
+    //clock_t inicio_convol , fin_convol;
+    //double time_convol;
+    double inicio_convol , fin_convol,time_convol;
     conteo[0]=NX;//cant filas
     conteo[1]=NY;//cant columnas
 
@@ -134,28 +131,25 @@ int main()
 
     /* el desarrollo acá */
     /*-------------------------------------------------------------------------*/
-    omp_set_num_threads(2);
-    #pragma omp parallel
+    #pragma omp parallel for num_threads(2)
+    for(int n;n<(21696*21696);n++)
     {
-        for(int n;n<(21696*21696);n++)
+	if(imag_in[n]==(-1))
         {
-            if(imag_in[n]==(-1))
-            {
-                imag_in[n]=(float)(0.0/0.0);
-            }
+        	imag_in[n]=(float)(0.0/0.0);
         }
     }
-
-	inicio_convol=clock();//tomo el tiempo en el que se inicia la convolucion
+    inicio_convol=omp_get_wtime();//tomo el tiempo en el que se inicia la convolucion
 
     convolve(imag_in, filtro, imag_filt);
+    fin_convol=omp_get_wtime();
     save_data(start[0],start[1], imag_filt);//arma matriz con datos de imagen
 	
-    fin_convol=clock();/*tomo el tiempo en el que finaliza la convolucion
-                       y ya se tiene la imagen procesada.*/
+//    fin_convol=clock();/*tomo el tiempo en el que finaliza la convolucion
+//                       y ya se tiene la imagen procesada.*/
     /*Calculo e imprimo tiempo total que le llevo filtrar imagen*/                       
-    time_convol=(double)(fin_convol-inicio_convol)/CLOCKS_PER_SEC;
-    printf("Tiempo de demora total (seg.): %.16g \n", time_convol*10);
+    time_convol=(double)(fin_convol-inicio_convol);
+    printf("Tiempo de demora total: %f \n", time_convol);
 
     //--------------------------------------------------------------------------
 
